@@ -7,3 +7,18 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  nickname      String   @unique
+  passwordHash  String
+  passwordSalt  String
+  currentGameId Int
+  currentGame   GameRoom @relation(fields: [currentGameId], references: [id])
+}
+
+model GameRoom {
+  id    Int    @id @default(autoincrement())
+  users User[]
+}
