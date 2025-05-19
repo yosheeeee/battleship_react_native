@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import api from 'api';
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { InputDefinition } from '~/types/input';
 
@@ -40,11 +41,26 @@ const inputFields: InputFieldsDefinitions = {
 
 export default function useAuthForm(formType: FormType) {
   const formInputs = useMemo(() => inputFields[formType], [formType]);
+  const route = useMemo(() => `/auth/${formType}`, [formType])
+  const [loading, setLoading] = useState(false)
 
-  const { handleSubmit, ...formProps } = useForm();
+  const { handleSubmit, setError, ...formProps } = useForm();
 
   const onSubmit = handleSubmit((data) => {
-    console.log(data);
+    let isError = false
+    formInputs.map((f, index) => {
+      if (!data[f.name]) {
+        setError(f.name, { message: `${f.title} is required` })
+        isError = true
+      }
+    })
+    if (isError) return
+    setLoading(true)
+    api.post(route, data)
+      .then(res => res.data)
+      .then(data => console.log(data))
+      .catch(e => console.error(e))
+      .finally(() => setLoading(false))
   });
 
   return { ...formProps, onSubmit, formInputs };

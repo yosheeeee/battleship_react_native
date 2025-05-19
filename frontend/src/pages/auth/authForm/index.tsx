@@ -37,14 +37,17 @@ function Input({ title, control, keyboardType, name }: InputProps) {
       <Text className="text-xl text-white">{title}</Text>
       <Controller
         control={control}
-        render={({ formState: { errors }, field: { value, onChange } }) => (
-          <TextInput
-            secureTextEntry={keyboardType == 'visible-password'}
-            keyboardType={keyboardType == 'visible-password' ? 'default' : keyboardType}
-            onChangeText={onChange}
-            value={value}
-            className="rounded-xl border-2 border-indigo-200 px-3 text-lg  text-indigo-100 caret-white"
-          />
+        render={({ formState: { errors }, field: { value, onChange }, fieldState: { error } }) => (
+          <View className='gap-1'>
+            <TextInput
+              secureTextEntry={keyboardType == 'visible-password'}
+              keyboardType={keyboardType == 'visible-password' ? 'default' : keyboardType}
+              onChangeText={onChange}
+              value={value}
+              className="rounded-xl border-2 border-indigo-200 px-3 text-lg  text-indigo-100 caret-white"
+            />
+            {error && <Text className='text-red-600'>{error.message}</Text>}
+          </View>
         )}
         name={name}
       />
