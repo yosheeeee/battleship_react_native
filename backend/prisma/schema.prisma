@@ -14,8 +14,8 @@ model User {
   nickname      String   @unique
   passwordHash  String
   passwordSalt  String
-  currentGameId Int
-  currentGame   GameRoom @relation(fields: [currentGameId], references: [id])
+  currentGameId Int?
+  currentGame   GameRoom? @relation(fields: [currentGameId], references: [id])
 }
 
 model GameRoom {
