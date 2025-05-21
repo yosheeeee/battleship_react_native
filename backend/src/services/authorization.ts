@@ -5,7 +5,7 @@ import { PrismaClient } from "../../generated/prisma/";
 import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
-const secretKey = process.env.TOKEN_PRIVATE_KEY
+const secretKey = process.env.TOKEN_PRIVATE_KEY;
 
 interface HashedPassword {
   hash: string;
@@ -35,7 +35,7 @@ async function login(req: Request, res: Response) {
     },
   });
 
-  if (!existedUser) {
+  if (existedUser == null) {
     res.status(400).send(
       createError({
         type: ErrorTypes.FIELD,
@@ -45,7 +45,12 @@ async function login(req: Request, res: Response) {
     );
   }
 
-  if (!(await isPasswordCorrect(body.password, existedUser?.passwordHash as string))) {
+  if (
+    !(await isPasswordCorrect(
+      body.password,
+      existedUser?.passwordHash as string,
+    ))
+  ) {
     res.status(400).send(
       createError({
         type: ErrorTypes.FIELD,
@@ -64,20 +69,20 @@ async function login(req: Request, res: Response) {
 
 function generateUserToken(user: any): string {
   if (!secretKey) {
-    throw new Error("secret key not found in .env file")
+    throw new Error("secret key not found in .env file");
   }
   const token = jwt.sign({
     email: user.email,
-    nickname: user.nickname
-  }, secretKey)
+    nickname: user.nickname,
+  }, secretKey);
 
-  return token
+  return token;
 }
 
 async function registration(req: Request, res: Response) {
-  let body = req.body as IRegistrationRequest
+  let body = req.body as IRegistrationRequest;
 
-  console.log(req.body)
+  console.log(req.body);
 
   if (!body || !body.email || !body.password || !body.nickname) {
     res.status(400);
@@ -88,40 +93,52 @@ async function registration(req: Request, res: Response) {
     where: {
       OR: [
         {
-          nickname: body.nickname.toLowerCase()
+          nickname: body.nickname.toLowerCase(),
         },
         {
-          email: body.email.toLowerCase()
-        }
-      ]
-    }
-  })
+          email: body.email.toLowerCase(),
+        },
+      ],
+    },
+  });
   if (existedUser != null) {
     if (body.email.toLowerCase() == existedUser.email) {
-      res.status(400).send(createError({ type: ErrorTypes.FIELD, error: "user with this email is already exists", field: "email" }))
+      res.status(400).send(
+        createError({
+          type: ErrorTypes.FIELD,
+          error: "user with this email is already exists",
+          field: "email",
+        }),
+      );
     }
     if (body.nickname.toLowerCase() == existedUser.nickname) {
-      res.status(400).send(createError({ type: ErrorTypes.FIELD, error: "user with this nickname is already exists", field: "nickname" }))
+      res.status(400).send(
+        createError({
+          type: ErrorTypes.FIELD,
+          error: "user with this nickname is already exists",
+          field: "nickname",
+        }),
+      );
     }
   }
 
-  let passwordHash = await hashPassword(body.password)
+  let passwordHash = await hashPassword(body.password);
 
   let user = await prisma.user.create({
     data: {
       email: body.email,
       nickname: body.nickname,
       passwordHash: passwordHash.hash,
-      passwordSalt: passwordHash.salt
-    }
-  })
+      passwordSalt: passwordHash.salt,
+    },
+  });
 
-  const token = generateUserToken(user)
+  const token = generateUserToken(user);
 
   res.send({
     message: "registered",
     id: user.id,
-    token
+    token,
   });
 }
 
@@ -143,28 +160,28 @@ async function isPasswordCorrect(
 }
 
 function decodeJWTToken(token: string) {
-  let userData = {}
+  let userData = {};
 
   jwt.verify(token, secretKey as string, (err, user) => {
-    if (err) throw Error(err.message)
+    if (err) throw Error(err.message);
     //@ts-ignore
-    userData = user
-  })
+    userData = user;
+  });
 
-  return userData
+  return userData;
 }
 
-type RequestWithUser = Request & { user: { nickname: string, email: string } }
+type RequestWithUser = Request & { user: { nickname: string; email: string } };
 
 function checkToken(req: RequestWithUser, res: Response) {
   res.send({
-    user: req.user
-  })
+    user: req.user,
+  });
 }
 
 export default {
   login,
   registration,
   decodeJWTToken,
-  checkToken
+  checkToken,
 };
