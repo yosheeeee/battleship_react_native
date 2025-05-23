@@ -26,7 +26,7 @@ function BaseButton(
   return (
     <Button
       onPress={() =>
-        navigate.navigate("auth-form", {
+        navigate.navigate("AuthForm", {
           formType,
         })}
       className="flex rounded-xl bg-sky-500 px-7 py-4 text-center"

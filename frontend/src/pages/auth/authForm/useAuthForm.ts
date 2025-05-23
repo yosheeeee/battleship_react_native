@@ -1,8 +1,9 @@
+import { useNavigation } from "@react-navigation/native";
 import api from "api";
-import { useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { authContext } from "~/store/useAuth";
 import { InputDefinition } from "~/types/input";
-import authStorage from "../../../store/auth";
 
 type FormType = "login" | "registration";
 
@@ -44,8 +45,17 @@ export default function useAuthForm(formType: FormType) {
   const formInputs = useMemo(() => inputFields[formType], [formType]);
   const route = useMemo(() => `/auth/${formType}`, [formType]);
   const [loading, setLoading] = useState(false);
+  const { login, isLogged } = useContext(authContext);
+  const navigation = useNavigation();
 
   const { handleSubmit, setError, ...formProps } = useForm();
+
+  useEffect(() => {
+    if (isLogged) {
+      console.log("should redirect");
+      navigation.navigate("Main");
+    }
+  }, [isLogged]);
 
   const onSubmit = handleSubmit((data) => {
     let isError = false;
@@ -59,11 +69,8 @@ export default function useAuthForm(formType: FormType) {
     setLoading(true);
     api.post(route, data)
       .then((res) => res.data)
-      .then(({ token }) => authStorage.login(token))
-      .then((res) => {
-        if (res) {
-          //TODO: навигация на главную страницу
-        }
+      .then(({ token }) => {
+        login(token);
       })
       .catch((e) => {
         if (e.response && e.response.data) {

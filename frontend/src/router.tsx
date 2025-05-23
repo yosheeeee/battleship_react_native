@@ -1,30 +1,38 @@
-import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import AuthPage from './pages/auth';
-import AuthForm from './pages/auth/authForm';
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { useContext } from "react";
+import { authContext } from "./store/useAuth";
+import Main from "./pages/main";
+import AuthPage from "./pages/auth";
+import AuthForm from "./pages/auth/authForm";
+import { createStaticNavigation } from "@react-navigation/native";
 
-const Stack = createNativeStackNavigator();
-
-const animationConfig = {
-  animation: 'spring',
-  config: {
-    stiffness: 1000,
-    damping: 500,
-    mass: 3,
-    overshootClamping: true,
-    restDisplacementThreshold: 0.01,
-    restSpeedThreshold: 0.01,
-  },
-};
-
-export default function AppRouter() {
-  return (
-    <NavigationContainer
-      theme={{ ...DefaultTheme, colors: { ...DefaultTheme.colors, background: 'transparent' } }}>
-      <Stack.Navigator initialRouteName="Auth" screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Auth" component={AuthPage} />
-        <Stack.Screen name="auth-form" component={AuthForm} />
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
+function useIsSignedIn() {
+  const { isLogged } = useContext(authContext);
+  return isLogged;
 }
+function useIsNotSignedIn() {
+  const { isLogged } = useContext(authContext);
+  return !isLogged;
+}
+
+const Stack = createNativeStackNavigator({
+  screens: {
+    Main: {
+      if: useIsSignedIn,
+      screen: Main,
+    },
+    Auth: {
+      if: useIsNotSignedIn,
+      screen: AuthPage,
+    },
+    AuthForm: {
+      if: useIsNotSignedIn,
+      screen: AuthForm,
+    },
+  },
+  screenOptions: {
+    headerShown: false,
+  },
+});
+
+export default createStaticNavigation(Stack);

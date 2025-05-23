@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import { Text, GestureResponderEvent, TouchableOpacity } from 'react-native';
+import { ReactNode } from "react";
+import { GestureResponderEvent, Text, TouchableOpacity } from "react-native";
 
 interface IButtonProps extends React.PropsWithChildren {
   className?: string;
