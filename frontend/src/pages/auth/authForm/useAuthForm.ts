@@ -2,7 +2,7 @@ import { useNavigation } from "@react-navigation/native";
 import api from "api";
 import { useContext, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { authContext } from "~/store/useAuth";
+import { authContext } from "~/store/auth";
 import { InputDefinition } from "~/types/input";
 
 type FormType = "login" | "registration";
@@ -49,13 +49,6 @@ export default function useAuthForm(formType: FormType) {
   const navigation = useNavigation();
 
   const { handleSubmit, setError, ...formProps } = useForm();
-
-  useEffect(() => {
-    if (isLogged) {
-      console.log("should redirect");
-      navigation.navigate("Main");
-    }
-  }, [isLogged]);
 
   const onSubmit = handleSubmit((data) => {
     let isError = false;

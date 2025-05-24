@@ -1,38 +1,54 @@
+// AppNavigator.jsx
+import React, { useContext, useEffect } from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { useContext } from "react";
-import { authContext } from "./store/useAuth";
+import {
+  DefaultTheme,
+  NavigationContainer,
+  useNavigation,
+} from "@react-navigation/native";
+
+// Экраны
 import Main from "./pages/main";
+
+// Контекст авторизации
+import { authContext } from "./store/auth";
 import AuthPage from "./pages/auth";
 import AuthForm from "./pages/auth/authForm";
-import { createStaticNavigation } from "@react-navigation/native";
+import { View } from "react-native";
 
-function useIsSignedIn() {
+const Stack = createNativeStackNavigator();
+
+function AppNavigator() {
   const { isLogged } = useContext(authContext);
-  return isLogged;
-}
-function useIsNotSignedIn() {
-  const { isLogged } = useContext(authContext);
-  return !isLogged;
+
+  if (isLogged === null) {
+    return <View></View>;
+  }
+
+  return (
+    <Stack.Navigator
+      initialRouteName={isLogged ? "Main" : "Auth"}
+      screenOptions={{ headerShown: false }}
+    >
+      {isLogged ? <Stack.Screen name="Main" component={Main} /> : (
+        <>
+          <Stack.Screen name="Auth" component={AuthPage} />
+          <Stack.Screen name="AuthForm" component={AuthForm} />
+        </>
+      )}
+    </Stack.Navigator>
+  );
 }
 
-const Stack = createNativeStackNavigator({
-  screens: {
-    Main: {
-      if: useIsSignedIn,
-      screen: Main,
-    },
-    Auth: {
-      if: useIsNotSignedIn,
-      screen: AuthPage,
-    },
-    AuthForm: {
-      if: useIsNotSignedIn,
-      screen: AuthForm,
-    },
-  },
-  screenOptions: {
-    headerShown: false,
-  },
-});
-
-export default createStaticNavigation(Stack);
+export default function () {
+  return (
+    <NavigationContainer
+      theme={{
+        ...DefaultTheme,
+        colors: { ...DefaultTheme.colors, background: "transparent" },
+      }}
+    >
+      <AppNavigator />
+    </NavigationContainer>
+  );
+}

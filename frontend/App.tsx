@@ -1,13 +1,11 @@
 import "./global.css";
 import AppRouter from "~/router";
-import { ImageBackground, View } from "react-native";
-import useAuth from "~/store/useAuth";
-import { DefaultTheme } from "@react-navigation/native";
+import { ImageBackground, Text, View } from "react-native";
+import AuthProvider from "~/store/auth";
 
 export default function App() {
-  const { context, ...state } = useAuth();
   return (
-    <context.Provider value={state}>
+    <AuthProvider>
       <View className="flex-1">
         <ImageBackground
           source={require("./assets/background/bg.png")}
@@ -15,14 +13,9 @@ export default function App() {
           blurRadius={6}
           resizeMode="cover"
         >
-          <AppRouter
-            theme={{
-              ...DefaultTheme,
-              colors: { ...DefaultTheme.colors, background: "transparent" },
-            }}
-          />
+          <AppRouter />
         </ImageBackground>
       </View>
-    </context.Provider>
+    </AuthProvider>
   );
 }
