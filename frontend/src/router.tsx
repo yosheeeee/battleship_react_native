@@ -15,6 +15,7 @@ import { authContext } from "./store/auth";
 import AuthPage from "./pages/auth";
 import AuthForm from "./pages/auth/authForm";
 import { View } from "react-native";
+import LoadingPage from "./pages/loading";
 
 const Stack = createNativeStackNavigator();
 
@@ -22,7 +23,7 @@ function AppNavigator() {
   const { isLogged } = useContext(authContext);
 
   if (isLogged === null) {
-    return <View></View>;
+    return <LoadingPage />;
   }
 
   return (

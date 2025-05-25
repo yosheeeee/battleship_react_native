@@ -9,13 +9,16 @@ datasource db {
 }
 
 model User {
-  id            Int      @id @default(autoincrement())
-  email         String   @unique
-  nickname      String   @unique
-  passwordHash  String
-  passwordSalt  String
-  currentGameId Int?
-  currentGame   GameRoom? @relation(fields: [currentGameId], references: [id])
+  id             Int       @id @default(autoincrement())
+  email          String    @unique
+  nickname       String    @unique
+  passwordHash   String
+  passwordSalt   String
+  avatarUrl      String?
+  winGamesCount  Int       @default(0)
+  loseGamesCount Int       @default(0)
+  currentGameId  Int?
+  currentGame    GameRoom? @relation(fields: [currentGameId], references: [id])
 }
 
 model GameRoom {

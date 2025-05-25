@@ -2,6 +2,7 @@ import "./global.css";
 import AppRouter from "~/router";
 import { ImageBackground, Text, View } from "react-native";
 import AuthProvider from "~/store/auth";
+import LoadingPage from "~/pages/loading";
 
 export default function App() {
   return (

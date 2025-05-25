@@ -11,12 +11,15 @@ import {
   MenuProvider,
   MenuTrigger,
 } from "react-native-popup-menu";
-import { authContext } from "~/store/auth";
-import { useNavigation } from "@react-navigation/native";
-import { useContext, useEffect } from "react";
+import useMainPage from "./useMainPage";
+import LoadingPage from "../loading";
 
 export default function () {
-  const { logout, isLogged } = useContext(authContext);
+  const { logout, userInfo, loading, image, pickImage } = useMainPage();
+
+  if (loading || userInfo == null) {
+    return <LoadingPage />;
+  }
 
   return (
     <MenuProvider>
@@ -26,6 +29,7 @@ export default function () {
             position: "absolute",
             top: 70,
             right: 30,
+            width: "auto",
           }}
         >
           <MenuTrigger>
@@ -38,6 +42,8 @@ export default function () {
               optionsContainer: {
                 marginTop: 40,
                 borderRadius: 10,
+                width: "auto",
+                paddingInline: 5,
               },
             }}
           >
@@ -47,9 +53,21 @@ export default function () {
                 gap: 5,
                 alignItems: "center",
               }}
-              onSelect={() => {
-                logout();
+              onSelect={pickImage}
+            >
+              <MaterialCommunityIcons
+                name="face-man-profile"
+                size={24}
+              />
+              <Text className="text-lg">Change Avatar</Text>
+            </MenuOption>
+            <MenuOption
+              style={{
+                flexDirection: "row",
+                gap: 5,
+                alignItems: "center",
               }}
+              onSelect={logout}
             >
               <MaterialIcons name="exit-to-app" color="red" size={24} />
               <Text className="text-lg">Logout</Text>
@@ -60,14 +78,21 @@ export default function () {
           <View className="flex-row gap-[10px] mb-[40px] items-center">
             <Image
               className="w-[100px] h-[100px] rounded-full"
-              source={require("./test-avatar.png")}
+              source={image == null
+                ? userInfo.avatarUrl == null ? require("./test-avatar.png") : {
+                  uri:
+                    `${process.env.EXPO_PUBLIC_BACKEND_URL}${userInfo.avatarUrl}`,
+                }
+                : { uri: image }}
             />
             <View className="gap-1">
-              <Text className="text-white text-2xl">Antipin Egor</Text>
+              <Text className="text-white text-2xl">{userInfo.nickname}</Text>
               <View className="flex w-max mx-auto flex-row items-center gap-2 text-white bg-blue-400 px-3 py-1 rounded-full">
                 <View className="flex-row items-center gap-1">
                   <FontAwesome6 name="medal" size={15} color="gold" />
-                  <Text className="text-[16px] text-white">0</Text>
+                  <Text className="text-[16px] text-white">
+                    {userInfo.winGamesCount}
+                  </Text>
                 </View>
                 <View className="flex-row items-center gap-1">
                   <MaterialCommunityIcons
@@ -75,7 +100,9 @@ export default function () {
                     size={20}
                     color="red"
                   />
-                  <Text className="text-[16px] text-white">0</Text>
+                  <Text className="text-[16px] text-white">
+                    {userInfo.loseGamesCount}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -85,17 +112,17 @@ export default function () {
             <Button className="rounded-xl px-7 items-center flex py-4 bg-white">
               <View className="flex-row gap-2 items-center">
                 <FontAwesome6 name="gamepad" size={24} />
-                <Text className="text-center text-xl">Fast play</Text>
+                <Text className="text-center flex-1 text-xl">Fast play</Text>
               </View>
             </Button>
-            <Button className="rounded-xl px-7 py-4 flex items-center bg-blue-400">
+            <Button className="rounded-xl px-7 py-4 min-w-max flex items-center bg-blue-400">
               <View className="flex-row gap-2 items-center">
                 <FontAwesome6
                   name="user-group"
                   size={24}
                   color="white"
                 />
-                <Text className="text-center text-xl text-white">
+                <Text className="text-center min-w-max  text-xl text-white">
                   Play with friend
                 </Text>
               </View>

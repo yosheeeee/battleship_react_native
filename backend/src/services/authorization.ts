@@ -21,6 +21,12 @@ interface ILoginRequest {
   password: string;
 }
 
+interface ITokenInfo {
+  email: string;
+  nickname: string;
+  id: number;
+}
+
 async function login(req: Request, res: Response) {
   let body = req.body as ILoginRequest;
 
@@ -71,10 +77,12 @@ function generateUserToken(user: any): string {
   if (!secretKey) {
     throw new Error("secret key not found in .env file");
   }
-  const token = jwt.sign({
+  const tokenPayload: ITokenInfo = {
     email: user.email,
     nickname: user.nickname,
-  }, secretKey);
+    id: user.id,
+  };
+  const token = jwt.sign(tokenPayload, secretKey);
 
   return token;
 }
@@ -159,7 +167,7 @@ async function isPasswordCorrect(
   return await bcrypt.compare(password, hash);
 }
 
-function decodeJWTToken(token: string) {
+function decodeJWTToken(token: string): ITokenInfo {
   let userData = {};
 
   jwt.verify(token, secretKey as string, (err, user) => {
@@ -168,10 +176,13 @@ function decodeJWTToken(token: string) {
     userData = user;
   });
 
+  //@ts-ignore
   return userData;
 }
 
-type RequestWithUser = Request & { user: { nickname: string; email: string } };
+export type RequestWithUser = Request & {
+  user: ITokenInfo;
+};
 
 function checkToken(req: RequestWithUser, res: Response) {
   res.send({
