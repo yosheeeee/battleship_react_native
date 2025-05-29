@@ -1,5 +1,13 @@
 import { Server } from "socket.io";
 import authorization from "./services/authorization";
+import BattleService from "./services/battleService";
+import { GameOverReason, GamePhase } from "./services/battleService/types";
+
+const battleService = BattleService;
+
+enum SocketEvents {
+  UPDATE_GAME_STATE = "update_game_state",
+}
 
 export default function initSocket(server: any) {
   const io = new Server(server, {
@@ -29,16 +37,65 @@ export default function initSocket(server: any) {
 
   io.on("connection", async (socket) => {
     const user = socket.data.user;
+    console.log("user conected");
+    console.dir(user);
 
-    //TODO: connecting to room by key
-    socket.on("join-room", async (roomKey: number) => {
-      socket.emit("connected to room");
+    socket.on("disconnect", async () => {
+      try {
+        const roomIds = await battleService.disconnectUserFromGame(user.id);
+        let socketEmitTo = io;
+        if (roomIds && roomIds.length) {
+          roomIds.forEach((roomId) => {
+            //@ts-ignore
+            socketEmitTo = socketEmitTo.to;
+          });
+          socketEmitTo.emit(SocketEvents.UPDATE_GAME_STATE, {
+            gamePhase: GamePhase.GAME_OVER,
+            gameOverReason: GameOverReason.USER_LEAVE,
+          });
+        }
+      } catch (e) {
+        console.error("Error handling disconnect:", e);
+      }
     });
 
-    //TODO: searching room
-    socket.on("search-room", async () => {});
+    socket.on("join_room", async (roomKey: number) => {
+      console.log("joining room:", roomKey);
+      try {
+        let response = await battleService.connectUserToRoom(
+          +roomKey,
+          socket.id,
+          user.id,
+        );
+        socket.join(response.gameRoom.id.toString());
+        io.to(response.gameRoom.id.toString()).emit(
+          SocketEvents.UPDATE_GAME_STATE,
+          response,
+        );
+      } catch (e) {
+        //@ts-ignore
+        console.log("error join:", e.message);
+        socket.emit("join_error", "Room with this key not found");
+      }
+    });
 
-    //TODO: creating room
-    socket.on("create-room", async () => {});
+    socket.on("search_room", async () => {
+      let response = await battleService.findRoomToUser(socket.id, user.id);
+      socket.join(response.gameRoom.id.toString());
+      io.to(response.gameRoom.id.toString()).emit(
+        SocketEvents.UPDATE_GAME_STATE,
+        response,
+      );
+    });
+
+    socket.on("create_room", async () => {
+      console.log("creating room");
+      let response = await battleService.createRoomToUser(socket.id, user.id);
+      socket.join(response.gameRoom.id.toString());
+      io.to(response.gameRoom.id.toString()).emit(
+        SocketEvents.UPDATE_GAME_STATE,
+        response,
+      );
+    });
   });
 }
