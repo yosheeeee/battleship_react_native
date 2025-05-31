@@ -25,6 +25,23 @@ class BattleService {
     if (existingGameRoom == null) {
       //@ts-ignore
       existingGameRoom = await this.createRoom(false, userId);
+    } else {
+      //@ts-ignore
+      existingGameRoom = await this.dbClient.gameRoom.update({
+        include: {
+          users: true,
+        },
+        where: {
+          id: existingGameRoom.id,
+        },
+        data: {
+          users: {
+            connect: {
+              id: userId,
+            },
+          },
+        },
+      });
     }
     return {
       gamePhase:
