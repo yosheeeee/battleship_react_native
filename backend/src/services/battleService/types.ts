@@ -35,17 +35,41 @@ export interface Player {
 }
 
 export enum GamePhase {
-  WAITING_FOR_PLAYERS,
-  STARTING_GAME,
-  PLACEMENT,
-  PLAYER1_TURN,
-  PLAYER2_TURN,
-  GAME_OVER,
+  WAITING_FOR_PLAYERS = "waiting_for_players",
+  STARTING_GAME = "starting_game",
+  PLACEMENT = "placement",
+  PLAYER_TURN = "player_turn",
+  GAME_OVER = "game_over",
 }
+
 export enum GameOverReason {
   USER_LEAVE,
   USER_WIN,
 }
+
+interface GameOverResponse {
+  gamePhase: GamePhase.GAME_OVER;
+  gameOverReason: GameOverReason;
+  winUserId: number;
+}
+
+interface ChangeUserTurnResponse {
+  gamePhase: GamePhase.PLAYER_TURN;
+  playerTurnId: number;
+}
+
+interface DefaultChangeGameStateResponse {
+  gamePhase:
+    | GamePhase.WAITING_FOR_PLAYERS
+    | GamePhase.STARTING_GAME
+    | GamePhase.PLACEMENT;
+}
+
+export type ChangeGameStateResponse = { roomId: number } & (
+  | DefaultChangeGameStateResponse
+  | ChangeUserTurnResponse
+  | GameOverResponse
+);
 
 export interface GameRoom {
   id: number;
@@ -69,11 +93,4 @@ export const SHIP_CONFIG = [
 export interface SocketData {
   roomId?: number;
   playerId?: string;
-}
-
-export interface ConnectingToGameReponse {
-  gameRoom: {
-    id: number;
-  };
-  gamePhase: GamePhase;
 }

@@ -1,5 +1,5 @@
 import { PrismaClient } from "../../../generated/prisma";
-import { ConnectingToGameReponse, GamePhase, GameRoom } from "./types";
+import { ChangeGameStateResponse, GamePhase, GameRoom } from "./types";
 
 class BattleService {
   gameRooms: GameRoom[];
@@ -13,7 +13,7 @@ class BattleService {
   async findRoomToUser(
     socketId: string,
     userId: number,
-  ): Promise<ConnectingToGameReponse> {
+  ): Promise<ChangeGameStateResponse> {
     let gameRooms = await this.dbClient.gameRoom.findMany({
       where: {
         private: false,
@@ -46,11 +46,9 @@ class BattleService {
     return {
       gamePhase:
         existingGameRoom.users.length == 2
-          ? GamePhase.STARTING_GAME
+          ? GamePhase.PLACEMENT
           : GamePhase.WAITING_FOR_PLAYERS,
-      gameRoom: {
-        id: existingGameRoom.id,
-      },
+      roomId: existingGameRoom.id,
     };
   }
 
@@ -73,7 +71,7 @@ class BattleService {
     roomId: number,
     socketId: string,
     userId: number,
-  ): Promise<ConnectingToGameReponse> {
+  ): Promise<ChangeGameStateResponse> {
     let game = await this.dbClient.gameRoom.findFirst({
       where: {
         id: roomId,
@@ -95,22 +93,18 @@ class BattleService {
       },
     });
     return {
-      gameRoom: {
-        id: roomId,
-      },
-      gamePhase: GamePhase.STARTING_GAME,
+      roomId,
+      gamePhase: GamePhase.PLACEMENT,
     };
   }
 
   async createRoomToUser(
     socketId: string,
     userId: number,
-  ): Promise<ConnectingToGameReponse> {
+  ): Promise<ChangeGameStateResponse> {
     let room = await this.createRoom(true, userId);
     return {
-      gameRoom: {
-        id: room.id,
-      },
+      roomId: room.id,
       gamePhase: GamePhase.WAITING_FOR_PLAYERS,
     };
   }

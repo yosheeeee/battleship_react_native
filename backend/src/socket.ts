@@ -5,8 +5,14 @@ import { GameOverReason, GamePhase } from "./services/battleService/types";
 
 const battleService = BattleService;
 
-enum SocketEvents {
+enum SocketBackendEvents {
   UPDATE_GAME_STATE = "update_game_state",
+}
+
+enum SocketClientEvents {
+  JOIN_ROOM = "join_room",
+  CREATE_ROOM = "create_room",
+  SEARCH_ROOM = "search_room",
 }
 
 export default function initSocket(server: any) {
@@ -41,6 +47,7 @@ export default function initSocket(server: any) {
     console.dir(user);
 
     socket.on("disconnect", async () => {
+      console.log("user disconnected");
       try {
         const roomIds = await battleService.disconnectUserFromGame(user.id);
         let socketEmitTo = io;
@@ -49,7 +56,7 @@ export default function initSocket(server: any) {
             //@ts-ignore
             socketEmitTo = socketEmitTo.to;
           });
-          socketEmitTo.emit(SocketEvents.UPDATE_GAME_STATE, {
+          socketEmitTo.emit(SocketBackendEvents.UPDATE_GAME_STATE, {
             gamePhase: GamePhase.GAME_OVER,
             gameOverReason: GameOverReason.USER_LEAVE,
           });
@@ -59,7 +66,7 @@ export default function initSocket(server: any) {
       }
     });
 
-    socket.on("join_room", async (roomKey: number) => {
+    socket.on(SocketClientEvents.JOIN_ROOM, async (roomKey: number) => {
       console.log("joining room:", roomKey);
       try {
         let response = await battleService.connectUserToRoom(
@@ -67,9 +74,9 @@ export default function initSocket(server: any) {
           socket.id,
           user.id,
         );
-        socket.join(response.gameRoom.id.toString());
-        io.to(response.gameRoom.id.toString()).emit(
-          SocketEvents.UPDATE_GAME_STATE,
+        socket.join(response.roomId.toString());
+        io.to(response.roomId.toString()).emit(
+          SocketBackendEvents.UPDATE_GAME_STATE,
           response,
         );
       } catch (e) {
@@ -79,21 +86,21 @@ export default function initSocket(server: any) {
       }
     });
 
-    socket.on("search_room", async () => {
+    socket.on(SocketClientEvents.SEARCH_ROOM, async () => {
       let response = await battleService.findRoomToUser(socket.id, user.id);
-      socket.join(response.gameRoom.id.toString());
-      io.to(response.gameRoom.id.toString()).emit(
-        SocketEvents.UPDATE_GAME_STATE,
+      socket.join(response.roomId.toString());
+      io.to(response.roomId.toString()).emit(
+        SocketBackendEvents.UPDATE_GAME_STATE,
         response,
       );
     });
 
-    socket.on("create_room", async () => {
+    socket.on(SocketClientEvents.CREATE_ROOM, async () => {
       console.log("creating room");
       let response = await battleService.createRoomToUser(socket.id, user.id);
-      socket.join(response.gameRoom.id.toString());
-      io.to(response.gameRoom.id.toString()).emit(
-        SocketEvents.UPDATE_GAME_STATE,
+      socket.join(response.roomId.toString());
+      io.to(response.roomId.toString()).emit(
+        SocketBackendEvents.UPDATE_GAME_STATE,
         response,
       );
     });

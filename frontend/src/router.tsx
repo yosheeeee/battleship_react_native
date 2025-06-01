@@ -14,6 +14,8 @@ import { View } from 'react-native';
 import LoadingPage from './pages/loading';
 import Waiting from './pages/game/waiting';
 import createGameWithFrieds from './pages/game/createGame/createGameWithFrieds';
+import ShipPlacement from './pages/game/shipPlacement';
+import Game from './pages/game/game';
 
 const Stack = createNativeStackNavigator();
 
@@ -33,6 +35,8 @@ function AppNavigator() {
           <Stack.Screen name="Main" component={Main} />
           <Stack.Screen name="WaitGame" component={Waiting} />
           <Stack.Screen name="CreateGameWithFrieds" component={createGameWithFrieds} />
+          <Stack.Screen name="ShipPlacement" component={ShipPlacement} />
+          <Stack.Screen name="Game" component={Game} />
         </>
       ) : (
         <>
