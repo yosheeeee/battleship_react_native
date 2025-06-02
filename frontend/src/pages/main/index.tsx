@@ -114,6 +114,14 @@ export default function () {
                 <Text className="min-w-max text-center  text-xl text-white">Play with friend</Text>
               </View>
             </Button>
+            <Button
+              onPress={() => navigate.navigate('ShipPlacement')}
+              className="flex min-w-max items-center rounded-xl bg-blue-400 px-7 py-4">
+              <View className="flex-row items-center gap-2">
+                <FontAwesome6 name="user-group" size={24} color="white" />
+                <Text className="min-w-max text-center  text-xl text-white">Play with friend</Text>
+              </View>
+            </Button>
           </View>
         </View>
       </View>

@@ -3958,6 +3958,7 @@ __metadata:
     eslint-config-expo: "npm:^9.2.0"
     eslint-config-prettier: "npm:^10.1.2"
     expo: "npm:^53.0.9"
+    expo-haptics: "npm:^14.1.4"
     expo-image-picker: "npm:^16.1.4"
     expo-status-bar: "npm:~2.2.3"
     nativewind: "npm:latest"
@@ -5870,6 +5871,15 @@ __metadata:
     expo: "*"
     react: "*"
   checksum: 10c0/aefcf1a1a413f11bcd8b1a4948ff725a864710a517cf15d6fd17c80b5b261595502dd2afa97044cb32d0a65371d6104c69df872c4d8cf4e24e8129e3073f5547
+  languageName: node
+  linkType: hard
+
+"expo-haptics@npm:^14.1.4":
+  version: 14.1.4
+  resolution: "expo-haptics@npm:14.1.4"
+  peerDependencies:
+    expo: "*"
+  checksum: 10c0/c8d4dd80fec8949b39af27b718383526b268b56cae4465af57ea7c5d470b34933c03574dc9c0baca06cf81018cc1eb63671a84a273abca685efb02cfd1604e3e
   languageName: node
   linkType: hard
 
