@@ -6,7 +6,7 @@ const GameSocketContext = createContext<{
   setSocket: (socket: Socket) => void
   disconnect: () => void;
 }>({
-  setSocket: (socket: Socket) => void,
+  setSocket: (socket: Socket) => {},
   socket: null,
   disconnect: () => {},
 });

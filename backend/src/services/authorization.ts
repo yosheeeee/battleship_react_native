@@ -3,6 +3,10 @@ import bcrypt from "bcrypt";
 import createError, { ErrorTypes } from "../functions/createError.ts";
 import { PrismaClient } from "../../generated/prisma/";
 import jwt from "jsonwebtoken";
+import dotenv from 'dotenv';
+
+dotenv.config();
+
 
 const prisma = new PrismaClient();
 const secretKey = process.env.TOKEN_PRIVATE_KEY;

@@ -5,6 +5,9 @@ import path from "path";
 import http from "http";
 import initSocket from "./socket.ts";
 import { PrismaClient } from "../generated/prisma/index";
+import dotenv from "dotenv";
+dotenv.config();
+
 
 const app = express();
 

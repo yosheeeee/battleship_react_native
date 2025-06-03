@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
+import { Socket } from 'socket.io-client';
 
 const FIELD_SIZE = 10;
 
@@ -22,7 +23,7 @@ const createEmptyField = () => {
 };
 
 // Проверяет, можно ли разместить корабль с координатами (row, col) заданного размера и направления
-const canPlaceShip = (field, row, col, size, isHorizontal) => {
+const canPlaceShip = (field: number[][], row: number, col: number, size: number, isHorizontal: boolean) => {
   for (let i = 0; i < size; i++) {
     const r = isHorizontal ? row : row + i;
     const c = isHorizontal ? col + i : col;
@@ -49,7 +50,7 @@ const canPlaceShip = (field, row, col, size, isHorizontal) => {
 };
 
 // Размещает корабль и зону вокруг него
-const placeShip = (field, row, col, size, isHorizontal) => {
+const placeShip = (field: number[][], row: number, col: number, size: number, isHorizontal: boolean) => {
   for (let i = 0; i < size; i++) {
     const r = isHorizontal ? row : row + i;
     const c = isHorizontal ? col + i : col;
@@ -83,15 +84,58 @@ const generateShipsOnField = () => {
   return field;
 };
 
-export default function useShipPlacement() {
+// Socket events for player readiness
+enum SocketClientEvents {
+  PLAYER_READY = 'player_ready',
+}
+
+enum SocketBackendEvents {
+  PLAYER_READY_UPDATE = 'player_ready_update',
+}
+
+export interface PlayerReadyState {
+  playerId: number;
+  isReady: boolean;
+}
+
+export default function useShipPlacement(socket?: Socket) {
   const [battleField, setBattleField] = useState(generateShipsOnField());
+  const [isReady, setIsReady] = useState(false);
+  const [otherPlayerReady, setOtherPlayerReady] = useState(false);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    // Listen for other player's ready state updates
+    socket.on(SocketBackendEvents.PLAYER_READY_UPDATE, (data: PlayerReadyState) => {
+      // If the update is not for the current player, update the other player's ready state
+      setOtherPlayerReady(data.isReady);
+    });
+
+    return () => {
+      socket.off(SocketBackendEvents.PLAYER_READY_UPDATE);
+    };
+  }, [socket]);
 
   const changePlacement = () => {
     setBattleField(generateShipsOnField());
   };
 
+  const toggleReady = () => {
+    const newReadyState = !isReady;
+    setIsReady(newReadyState);
+
+    // Emit the ready state to the server if socket is available
+    if (socket) {
+      socket.emit(SocketClientEvents.PLAYER_READY, { isReady: newReadyState });
+    }
+  };
+
   return {
     battleField,
     changePlacement,
+    isReady,
+    otherPlayerReady,
+    toggleReady,
   };
 }

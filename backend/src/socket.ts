@@ -7,12 +7,14 @@ const battleService = BattleService;
 
 enum SocketBackendEvents {
   UPDATE_GAME_STATE = "update_game_state",
+  PLAYER_READY_UPDATE = "player_ready_update",
 }
 
 enum SocketClientEvents {
   JOIN_ROOM = "join_room",
   CREATE_ROOM = "create_room",
   SEARCH_ROOM = "search_room",
+  PLAYER_READY = "player_ready",
 }
 
 export default function initSocket(server: any) {
@@ -103,6 +105,29 @@ export default function initSocket(server: any) {
         SocketBackendEvents.UPDATE_GAME_STATE,
         response,
       );
+    });
+
+    // Handle player ready state
+    socket.on(SocketClientEvents.PLAYER_READY, async (data: { isReady: boolean }) => {
+      console.log("player ready state changed:", data);
+      try {
+        // Get the rooms this socket is in
+        const socketRooms = Array.from(socket.rooms).filter(room => room !== socket.id);
+
+        if (socketRooms.length === 0) {
+          console.error("Socket is not in any room");
+          return;
+        }
+
+        // Broadcast to all clients in the room except the sender
+        const roomId = socketRooms[0]; // Assuming the player is only in one game room
+        socket.to(roomId).emit(SocketBackendEvents.PLAYER_READY_UPDATE, {
+          playerId: user.id,
+          isReady: data.isReady
+        });
+      } catch (e) {
+        console.error("Error handling player ready state:", e);
+      }
     });
   });
 }

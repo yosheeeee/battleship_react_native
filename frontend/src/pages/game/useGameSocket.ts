@@ -4,6 +4,27 @@ import { authContext } from '~/store/auth';
 import { Alert, Clipboard, ToastAndroid } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
+// Определение типов для навигации
+type RootStackParamList = {
+  ShipPlacement: {
+    socket: Socket;
+    gameCode?: string;
+  };
+};
+
+// Тип для события beforeRemove
+interface BeforeRemoveEvent {
+  data: { action: any };
+  preventDefault: () => void;
+  type: string;
+}
+
+type NavigationProp = {
+  navigate: (screen: keyof RootStackParamList, params?: any) => void;
+  dispatch: (action: any) => void;
+  addListener: (event: string, callback: (e: BeforeRemoveEvent) => void) => () => void;
+};
+
 enum SocketClientEvents {
   JOIN_ROOM = 'join_room',
   CREATE_ROOM = 'create_room',
@@ -54,7 +75,7 @@ export interface GameSocketProps {
 }
 
 export default function useSocket({ gameCode, type }: GameSocketProps) {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
   const [isConnected, setIsConnected] = useState(false);
   const [socket, setSocket] = useState<Socket | null>(null);
   const { getToken } = useContext(authContext);
@@ -68,9 +89,20 @@ export default function useSocket({ gameCode, type }: GameSocketProps) {
       try {
         const token = await getToken(); // получаем токен
 
+        if (!token) {
+          console.error('Unable to get authentication token');
+          return;
+        }
+
         if (!isMounted) return;
 
-        const newSocket = io(process.env.EXPO_PUBLIC_BACKEND_URL, {
+        const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL;
+        if (!backendUrl) {
+          console.error('EXPO_PUBLIC_BACKEND_URL is not defined');
+          return;
+        }
+
+        const newSocket = io(backendUrl, {
           auth: {
             token,
           },
@@ -93,12 +125,15 @@ export default function useSocket({ gameCode, type }: GameSocketProps) {
         });
 
         newSocket.on('connect_error', (err) => {
-          console.log('Socket connection error:');
+          console.log('Socket connection error:', err.message);
+          if (isMounted) {
+            setIsConnected(false);
+          }
         });
 
         newSocket.on(SocketBackendEvents.UPDATE_GAME_STATE, onChangeGameState);
 
-        const unsubscribeRemoveListener = navigation.addListener('beforeRemove', (e) => {
+                  const unsubscribeRemoveListener = navigation.addListener('beforeRemove', (e: BeforeRemoveEvent) => {
           e.preventDefault();
           Alert.alert('Stop connecting?', 'Are you shure you want to leave game connecting?', [
             {
@@ -148,10 +183,16 @@ export default function useSocket({ gameCode, type }: GameSocketProps) {
     };
 
     connectSocket();
-  }, []);
+  }, [getToken, type, gameCode, navigation]);
 
   function copyToClipboard() {
-    Clipboard.setString(gameCode?.toString());
+    if (!gameCode && !gameRoomId) {
+      ToastAndroid.show('No game code to copy!', ToastAndroid.SHORT);
+      return;
+    }
+
+    const codeToCopy = gameCode?.toString() || gameRoomId?.toString() || "";
+    Clipboard.setString(codeToCopy);
     ToastAndroid.showWithGravityAndOffset(
       'Copied to clipboard',
       ToastAndroid.SHORT,
@@ -167,6 +208,10 @@ export default function useSocket({ gameCode, type }: GameSocketProps) {
         socket.emit(SocketClientEvents.CREATE_ROOM);
         break;
       case 'join':
+        if (!gameCode) {
+          console.error('Game code is required for joining a room');
+          return;
+        }
         socket.emit(SocketClientEvents.JOIN_ROOM, gameCode);
         break;
       case 'search':
@@ -177,6 +222,10 @@ export default function useSocket({ gameCode, type }: GameSocketProps) {
 
   function onChangeGameState(res: ChangeGameStateResponse) {
     console.log('update game state:', res);
+    if (!res || !res.roomId || !res.gamePhase) {
+      console.error('Invalid response from server:', res);
+      return;
+    }
     setGameRoomId((prev) => (prev == null ? res.roomId : prev));
     setGamePhase(res.gamePhase);
   }
@@ -188,7 +237,7 @@ export default function useSocket({ gameCode, type }: GameSocketProps) {
         gameCode,
       });
     }
-  }, [gamePhase, socket]);
+  }, [gamePhase, socket, gameCode, navigation]);
 
   return { socket, isConnected, gamePhase, gameRoomId, copyToClipboard };
 }
