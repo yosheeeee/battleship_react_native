@@ -23,7 +23,13 @@ const createEmptyField = () => {
 };
 
 // Проверяет, можно ли разместить корабль с координатами (row, col) заданного размера и направления
-const canPlaceShip = (field: number[][], row: number, col: number, size: number, isHorizontal: boolean) => {
+const canPlaceShip = (
+  field: number[][],
+  row: number,
+  col: number,
+  size: number,
+  isHorizontal: boolean
+) => {
   for (let i = 0; i < size; i++) {
     const r = isHorizontal ? row : row + i;
     const c = isHorizontal ? col + i : col;
@@ -50,7 +56,13 @@ const canPlaceShip = (field: number[][], row: number, col: number, size: number,
 };
 
 // Размещает корабль и зону вокруг него
-const placeShip = (field: number[][], row: number, col: number, size: number, isHorizontal: boolean) => {
+const placeShip = (
+  field: number[][],
+  row: number,
+  col: number,
+  size: number,
+  isHorizontal: boolean
+) => {
   for (let i = 0; i < size; i++) {
     const r = isHorizontal ? row : row + i;
     const c = isHorizontal ? col + i : col;
@@ -127,7 +139,7 @@ export default function useShipPlacement(socket?: Socket) {
 
     // Emit the ready state to the server if socket is available
     if (socket) {
-      socket.emit(SocketClientEvents.PLAYER_READY, { isReady: newReadyState });
+      socket.emit(SocketClientEvents.PLAYER_READY, { isReady: newReadyState, battleField });
     }
   };
 

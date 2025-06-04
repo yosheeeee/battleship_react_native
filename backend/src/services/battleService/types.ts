@@ -16,7 +16,7 @@ export interface Cell {
 export type Board = Cell[][];
 
 export interface Ship {
-  id: string;
+  id: number;
   type: string;
   length: number;
   hits: number;
@@ -74,7 +74,6 @@ export type ChangeGameStateResponse = { roomId: number } & (
 export interface GameRoom {
   id: number;
   players: Player[];
-  phase: GamePhase;
 }
 
 export const SHIP_CONFIG = [

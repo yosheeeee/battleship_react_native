@@ -1,7 +1,11 @@
 import { Server } from "socket.io";
 import authorization from "./services/authorization";
 import BattleService from "./services/battleService";
-import { GameOverReason, GamePhase } from "./services/battleService/types";
+import {
+  CellState,
+  GameOverReason,
+  GamePhase,
+} from "./services/battleService/types";
 
 const battleService = BattleService;
 
@@ -108,26 +112,42 @@ export default function initSocket(server: any) {
     });
 
     // Handle player ready state
-    socket.on(SocketClientEvents.PLAYER_READY, async (data: { isReady: boolean }) => {
-      console.log("player ready state changed:", data);
-      try {
-        // Get the rooms this socket is in
-        const socketRooms = Array.from(socket.rooms).filter(room => room !== socket.id);
+    socket.on(
+      SocketClientEvents.PLAYER_READY,
+      async (battleField: CellState[][]) => {
+        try {
+          let { isAllReady, turnPlayerId: playerTurnId } =
+            await battleService.setUserBattleField(
+              socket.data.user.id,
+              battleField,
+            );
+          // Get the rooms this socket is in
+          const socketRooms = Array.from(socket.rooms).filter(
+            (room) => room !== socket.id,
+          );
 
-        if (socketRooms.length === 0) {
-          console.error("Socket is not in any room");
-          return;
+          if (socketRooms.length === 0) {
+            console.error("Socket is not in any room");
+            return;
+          }
+
+          // Broadcast to all clients in the room except the sender
+          const roomId = socketRooms[0]; // Assuming the player is only in one game room
+          if (isAllReady) {
+            socket.to(roomId).emit(SocketBackendEvents.UPDATE_GAME_STATE, {
+              gamePhase: GamePhase.STARTING_GAME,
+              playerTurnId,
+            });
+          } else {
+            socket.to(roomId).emit(SocketBackendEvents.PLAYER_READY_UPDATE, {
+              playerId: user.id,
+              isReady: true,
+            });
+          }
+        } catch (e) {
+          console.error("Error handling player ready state:", e);
         }
-
-        // Broadcast to all clients in the room except the sender
-        const roomId = socketRooms[0]; // Assuming the player is only in one game room
-        socket.to(roomId).emit(SocketBackendEvents.PLAYER_READY_UPDATE, {
-          playerId: user.id,
-          isReady: data.isReady
-        });
-      } catch (e) {
-        console.error("Error handling player ready state:", e);
-      }
-    });
+      },
+    );
   });
 }
